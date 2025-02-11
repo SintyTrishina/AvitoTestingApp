@@ -1,26 +1,26 @@
 package com.example.avitotestingapp.frameworks
 
 
-import android.content.SharedPreferences
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.example.avitotestingapp.R
-import com.example.avitotestingapp.data.Data
+import com.example.avitotestingapp.data.Track
 
 class TrackAdapter(
-    private val onItemClickListener: (Data) -> Unit
+    private val onItemClickListener: (Track) -> Unit
 ) : RecyclerView.Adapter<TrackViewHolder>() {
 
-    private var tracks: ArrayList<Data> = ArrayList()
+    private var tracks: ArrayList<Track> = ArrayList()
 //    private lateinit var searchHistory: SearchHistory
 //
 //    fun initSharedPrefs(sharedPrefs: SharedPreferences) {
 //        searchHistory = SearchHistory(sharedPrefs)
 //    }
 
-    fun updateTracks(newTracks: ArrayList<Data>) {
-        tracks = newTracks
+    fun updateTracks(newTracks: ArrayList<Track>) {
+        tracks.clear()
+        tracks.addAll(newTracks)
         notifyDataSetChanged()
     }
 

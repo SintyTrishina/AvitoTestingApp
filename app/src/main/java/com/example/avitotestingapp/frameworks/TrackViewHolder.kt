@@ -9,7 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.example.avitotestingapp.R
-import com.example.avitotestingapp.data.Data
+import com.example.avitotestingapp.data.Track
 
 class TrackViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
 
@@ -26,7 +26,7 @@ class TrackViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
         ).toInt()
     }
 
-    fun bind(item: Data) {
+    fun bind(item: Track) {
         trackNameView.text = item.title
         artistNameView.text = item.artist.name
         val cornerRadius = dpToPx(2f, itemView.context)

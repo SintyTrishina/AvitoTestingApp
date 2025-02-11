@@ -9,10 +9,10 @@ import retrofit2.http.Query
 interface DeezerApi {
 
     @GET("/chart")
-    suspend fun getChart(): Call<ChartResponse>
+    fun getChart(): Call<ChartResponse>
 
     @GET("/search?q=query")
-    suspend fun searchTracks(@Query("q") query: String): Call<SearchResponse>
+    fun searchTracks(@Query("q") query: String): Call<SearchResponse>
 
     companion object {
         private const val BASE_URL = "https://api.deezer.com"

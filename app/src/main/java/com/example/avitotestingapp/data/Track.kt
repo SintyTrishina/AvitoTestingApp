@@ -1,6 +1,6 @@
 package com.example.avitotestingapp.data
 
-data class Data(
+data class Track(
     val album: Album,
     val artist: Artist,
     val duration: Int,
