@@ -21,6 +21,7 @@ import com.example.avitotestingapp.data.SearchResponse
 import com.example.avitotestingapp.data.Track
 import com.example.avitotestingapp.frameworks.TrackAdapter
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.gson.Gson
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -39,54 +40,65 @@ class DownloadActivity : AppCompatActivity() {
         setContentView(R.layout.activity_download)
 
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
-        bottomNav.selectedItemId = R.id.downloadedTracksActivity // Установите текущий элемент
+        bottomNav.selectedItemId = R.id.downloadedTracksActivity
 
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
                 R.id.audioPlayerActivity -> {
                     startActivity(Intent(this, ApiTracksActivity::class.java))
-                    overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out) // Анимация перехода
+                    overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out)
                     true
                 }
+
                 else -> false
             }
         }
 
-
         val trackRecyclerView = findViewById<RecyclerView>(R.id.trackRecyclerView)
-        if (clickDebounce()) {
-            trackAdapter = TrackAdapter { track, position ->
-                val trackIds = tracks.map { it.id } // Получаем список ID треков
-                val intentAudioPlayerActivity = Intent(this, AudioPlayerActivity::class.java).apply {
-                    putExtra("TRACK_ID", track.id)
-                    putExtra("TRACK_IDS", trackIds.toLongArray()) // Передаем список ID треков
-                    putExtra("CURRENT_TRACK_INDEX", position) // Передаем индекс текущего трека
-                }
-                startActivity(intentAudioPlayerActivity)}
+        trackAdapter = TrackAdapter { track, position ->
+            val trackIds = tracks.map { it.id }
+            val intentAudioPlayerActivity = Intent(this, AudioPlayerActivity::class.java).apply {
+                putExtra("TRACK_ID", track.id)
+                putExtra("TRACK_IDS", trackIds.toLongArray())
+                putExtra("CURRENT_TRACK_INDEX", position)
+            }
+            startActivity(intentAudioPlayerActivity)
         }
-
         trackRecyclerView.adapter = trackAdapter
-
+        loadTracks()
 
         inputEditText = findViewById(R.id.inputEditText)
-
-        val textWatcher = object : TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
-            }
-
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                searchDebounce()
-            }
-
+        inputEditText.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
                 userText = s.toString()
                 if (!s.isNullOrBlank()) {
                     searchDebounce()
                 }
             }
+        })
+    }
+
+    private fun loadTracks() {
+        val sharedPrefs = getSharedPreferences("Downloaded tracks", MODE_PRIVATE)
+        val allEntries = sharedPrefs.all
+        val loadedTracks = mutableListOf<Track>()
+
+        for ((key, value) in allEntries) {
+            val trackJson = value as String
+            val track = Gson().fromJson(trackJson, Track::class.java)
+            loadedTracks.add(track)
         }
 
-        inputEditText.addTextChangedListener(textWatcher)
+        this.tracks.clear()
+        this.tracks.addAll(loadedTracks)
+        trackAdapter.updateTracks(this.tracks)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        handler.removeCallbacks(searchRunnable)
     }
 
     private fun clickDebounce(): Boolean {
@@ -105,11 +117,15 @@ class DownloadActivity : AppCompatActivity() {
 
     private val searchRunnable = Runnable { showTracks() }
 
-
     private fun showTracks() {
-        if (tracks.isNotEmpty()) {
-            trackAdapter.updateTracks(tracks)
-
+        val filteredTracks = tracks.filter { track ->
+            track.title.contains(userText, ignoreCase = true) ||
+                    track.artist.name.contains(userText, ignoreCase = true)
         }
+        trackAdapter.updateTracks(filteredTracks)
+    }
+    override fun onResume() {
+        super.onResume()
+        loadTracks()
     }
 }

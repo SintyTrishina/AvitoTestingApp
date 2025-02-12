@@ -14,7 +14,7 @@ class TrackAdapter(
     private var tracks: ArrayList<Track> = ArrayList()
 
 
-    fun updateTracks(newTracks: ArrayList<Track>) {
+    fun updateTracks(newTracks: List<Track>) {
         tracks.clear()
         tracks.addAll(newTracks)
         notifyDataSetChanged()
