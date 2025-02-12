@@ -54,8 +54,8 @@ class AudioPlayerActivity : AppCompatActivity() {
         initMediaPlayer()
 
         trackIds = intent.getLongArrayExtra("TRACK_IDS") ?: longArrayOf()
-        trackId = intent.getLongExtra("TRACK_ID", 0L)
-        currentTrackIndex = intent.getIntExtra("CURRENT_TRACK_INDEX", 0)
+        trackId = intent.getLongExtra("TRACK_ID", -1)
+        currentTrackIndex = trackIds.indexOf(trackId!!)
 
         loadTrackData()
     }
@@ -228,10 +228,16 @@ class AudioPlayerActivity : AppCompatActivity() {
             findViewById<TextView>(R.id.trackName).text = track.title
             findViewById<TextView>(R.id.artistName).text = track.artist.name
 
-            Glide.with(this)
-                .load(track.album.cover_big)
-                .placeholder(R.drawable.placeholder)
-                .into(findViewById(R.id.imageMusic))
+            // Проверяем, есть ли URL изображения
+            val imageUrl = track.album.cover_big
+
+                // Если URL есть, загружаем изображение
+                Glide.with(this)
+                    .load(imageUrl)
+                    .placeholder(R.drawable.placeholder) // Устанавливаем placeholder
+                    .error(R.drawable.placeholder) // Устанавливаем placeholder в случае ошибки
+                    .into(findViewById(R.id.imageMusic))
+
         }
     }
 

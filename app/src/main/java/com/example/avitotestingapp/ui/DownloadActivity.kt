@@ -7,7 +7,9 @@ import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
+import android.view.View
 import android.widget.EditText
+import android.widget.ProgressBar
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -34,7 +36,6 @@ class DownloadActivity : AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
     private var isClickAllowed = true
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_download)
@@ -56,13 +57,16 @@ class DownloadActivity : AppCompatActivity() {
 
         val trackRecyclerView = findViewById<RecyclerView>(R.id.trackRecyclerView)
         trackAdapter = TrackAdapter { track, position ->
-            val trackIds = tracks.map { it.id }
-            val intentAudioPlayerActivity = Intent(this, AudioPlayerActivity::class.java).apply {
-                putExtra("TRACK_ID", track.id)
-                putExtra("TRACK_IDS", trackIds.toLongArray())
-                putExtra("CURRENT_TRACK_INDEX", position)
+            if (clickDebounce()) {
+                val trackIds = tracks.map { it.id }
+                val intentAudioPlayerActivity =
+                    Intent(this, AudioPlayerActivity::class.java).apply {
+                        putExtra("TRACK_ID", track.id)
+                        putExtra("TRACK_IDS", trackIds.toLongArray())
+                        putExtra("CURRENT_TRACK_INDEX", position)
+                    }
+                startActivity(intentAudioPlayerActivity)
             }
-            startActivity(intentAudioPlayerActivity)
         }
         trackRecyclerView.adapter = trackAdapter
         loadTracks()
@@ -70,7 +74,14 @@ class DownloadActivity : AppCompatActivity() {
         inputEditText = findViewById(R.id.inputEditText)
         inputEditText.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                userText = s?.toString() ?: ""
+                if (userText.isEmpty()) {
+                    loadTracks() // Загружаем все треки
+                } else {
+                    searchDebounce()
+                }
+            }
             override fun afterTextChanged(s: Editable?) {
                 userText = s.toString()
                 if (!s.isNullOrBlank()) {
@@ -112,20 +123,24 @@ class DownloadActivity : AppCompatActivity() {
 
     private fun searchDebounce() {
         handler.removeCallbacks(searchRunnable)
-        handler.postDelayed(searchRunnable, 1000L)
+        if (inputEditText.text.isNotEmpty()) { // Запускаем поиск только если текст не пустой
+            handler.postDelayed(searchRunnable, 1000L)
+        }
     }
 
     private val searchRunnable = Runnable { showTracks() }
 
     private fun showTracks() {
-        val filteredTracks = tracks.filter { track ->
-            track.title.contains(userText, ignoreCase = true) ||
-                    track.artist.name.contains(userText, ignoreCase = true)
+        if (userText.isEmpty()) {
+            // Если текст пустой, показываем все треки
+            loadTracks()
+        } else {
+            // Если текст не пустой, фильтруем треки
+            val filteredTracks = tracks.filter { track ->
+                track.title.contains(userText, ignoreCase = true) ||
+                        track.artist.name.contains(userText, ignoreCase = true)
+            }
+            trackAdapter.updateTracks(filteredTracks)
         }
-        trackAdapter.updateTracks(filteredTracks)
-    }
-    override fun onResume() {
-        super.onResume()
-        loadTracks()
     }
 }

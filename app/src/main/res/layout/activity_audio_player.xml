@@ -161,9 +161,8 @@
             android:id="@+id/seekBar"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            app:layout_constraintTop_toBottomOf="@id/timePlay"
             app:layout_constraintBottom_toBottomOf="parent"
-            />
+            app:layout_constraintTop_toBottomOf="@id/timePlay" />
 
 
     </androidx.constraintlayout.widget.ConstraintLayout>

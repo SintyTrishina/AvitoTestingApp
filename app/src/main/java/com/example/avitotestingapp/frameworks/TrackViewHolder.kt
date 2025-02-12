@@ -34,6 +34,7 @@ class TrackViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
         Glide.with(itemView)
             .load(item.album.cover)
             .placeholder(R.drawable.placeholder)
+            .error(R.drawable.placeholder)
             .centerCrop()
             .transform(RoundedCorners(cornerRadius))
             .into(artworkImageView)

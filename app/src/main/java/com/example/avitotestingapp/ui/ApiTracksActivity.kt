@@ -7,7 +7,9 @@ import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
+import android.view.View
 import android.widget.EditText
+import android.widget.ProgressBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.example.avitotestingapp.R
@@ -28,11 +30,13 @@ class ApiTracksActivity : AppCompatActivity() {
     private lateinit var trackAdapter: TrackAdapter
     private val handler = Handler(Looper.getMainLooper())
     private var isClickAllowed = true
+    private lateinit var progressBar: ProgressBar
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_api_tracks)
+        progressBar = findViewById(R.id.progressBar)
 
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
         bottomNav.selectedItemId = R.id.audioPlayerActivity // Установите текущий элемент
@@ -41,23 +45,30 @@ class ApiTracksActivity : AppCompatActivity() {
             when (item.itemId) {
                 R.id.downloadedTracksActivity -> {
                     startActivity(Intent(this, DownloadActivity::class.java))
-                    overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out) // Анимация перехода
+                    overridePendingTransition(
+                        android.R.anim.fade_in,
+                        android.R.anim.fade_out
+                    ) // Анимация перехода
                     true
                 }
+
                 else -> false
             }
 
         }
         val trackRecyclerView = findViewById<RecyclerView>(R.id.trackRecyclerView)
         if (clickDebounce()) {
-        trackAdapter = TrackAdapter { track, position ->
-            val trackIds = tracks.map { it.id } // Получаем список ID треков
-            val intentAudioPlayerActivity = Intent(this, AudioPlayerActivity::class.java).apply {
-                putExtra("TRACK_ID", track.id)
-                putExtra("TRACK_IDS", trackIds.toLongArray()) // Передаем список ID треков
-                putExtra("CURRENT_TRACK_INDEX", position) // Передаем индекс текущего трека
+            trackAdapter = TrackAdapter { track, position ->
+                val trackIds = tracks.map { it.id } // Получаем список ID треков
+                val intentAudioPlayerActivity =
+                    Intent(this, AudioPlayerActivity::class.java).apply {
+                        putExtra("TRACK_ID", track.id)
+                        putExtra("TRACK_IDS", trackIds.toLongArray()) // Передаем список ID треков
+                        putExtra("CURRENT_TRACK_INDEX", position) // Передаем индекс текущего трека
+                        putExtra("PREVIEW_URL", track.preview)
+                    }
+                startActivity(intentAudioPlayerActivity)
             }
-            startActivity(intentAudioPlayerActivity)}
         }
 
         trackRecyclerView.adapter = trackAdapter
@@ -70,22 +81,34 @@ class ApiTracksActivity : AppCompatActivity() {
             }
 
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
-                searchDebounce()
+                userText = s?.toString() ?: ""
+                if (userText.isEmpty()) {
+                    // Если текст пустой, очищаем историю и загружаем чарт
+                    hideSearchHistory()
+                    getChartTracks()
+                } else {
+                    // Если текст не пустой, запускаем поиск с задержкой
+                    searchDebounce()
+                }
             }
 
             override fun afterTextChanged(s: Editable?) {
                 userText = s.toString()
                 if (!s.isNullOrBlank()) {
                     searchDebounce()
-                } else {
-                    getChartTracks()
                 }
             }
         }
 
         inputEditText.addTextChangedListener(textWatcher)
 
+
         getChartTracks()
+    }
+
+    private fun hideSearchHistory() {
+        tracks.clear()
+        trackAdapter.updateTracks(tracks)
     }
 
     private fun clickDebounce(): Boolean {
@@ -105,6 +128,7 @@ class ApiTracksActivity : AppCompatActivity() {
     private val searchRunnable = Runnable { search() }
 
     private fun getChartTracks() {
+        progressBar.visibility = View.VISIBLE
         DeezerApi.create().getChart()
             .enqueue(object : Callback<ChartResponse> {
                 override fun onResponse(
@@ -113,6 +137,7 @@ class ApiTracksActivity : AppCompatActivity() {
                 ) {
 
                     if (response.isSuccessful && response.body() != null) {
+                        progressBar.visibility = View.GONE
                         response.body()?.tracks?.data?.let { data ->
                             tracks.clear()
                             tracks.addAll(data)
@@ -132,40 +157,40 @@ class ApiTracksActivity : AppCompatActivity() {
     }
 
     private fun search() {
-        if (inputEditText.text.isNotEmpty()) {
+        // Скрываем историю и показываем ProgressBar
+        progressBar.visibility = View.VISIBLE
+        hideSearchHistory()
 
+        // Проверяем, есть ли текст для поиска
+        if (inputEditText.text.isNotEmpty()) {
             DeezerApi.create().searchTracks(query = inputEditText.text.toString())
                 .enqueue(object : Callback<SearchResponse> {
                     override fun onResponse(
                         call: Call<SearchResponse>, response: Response<SearchResponse>
                     ) {
+                        progressBar.visibility = View.GONE // Скрываем ProgressBar после завершения
                         if (response.code() == 200) {
                             tracks.clear()
                             if (response.body()?.data?.isNotEmpty() == true) {
                                 tracks.addAll(response.body()?.data!!)
                                 showTracks()
-                            }
-                            if (tracks.isEmpty()) {
-
-                                showMessage("nothing_found", "")
                             } else {
-
-                                showMessage("", "")
+                                showMessage("nothing_found", "")
                             }
                         } else {
-                            showMessage(
-                                "something_went_wrong", response.code().toString()
-                            )
+                            showMessage("something_went_wrong", response.code().toString())
                         }
                     }
 
                     override fun onFailure(call: Call<SearchResponse>, t: Throwable) {
-
-                        showMessage(
-                            "something_went_wrong", t.message.toString()
-                        )
+                        progressBar.visibility = View.GONE // Скрываем ProgressBar в случае ошибки
+                        showMessage("something_went_wrong", t.message.toString())
                     }
                 })
+        } else {
+            // Если текст пустой, скрываем ProgressBar и очищаем историю
+            progressBar.visibility = View.GONE
+            hideSearchHistory()
         }
     }
 

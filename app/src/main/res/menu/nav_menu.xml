@@ -4,12 +4,11 @@
         android:id="@+id/audioPlayerActivity"
         android:icon="@drawable/search"
         android:iconTint="@color/black"
-        android:title="Audio Player" />
+        android:title="" />
     <item
         android:id="@+id/downloadedTracksActivity"
         android:icon="@android:drawable/stat_sys_download"
         android:iconTint="@color/black"
-        android:title="Downloaded Tracks"
-        />
+        android:title="" />
 
 </menu>

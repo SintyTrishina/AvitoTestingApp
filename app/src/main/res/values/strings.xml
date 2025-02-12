@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">AvitoTestingApp</string>
+    <string name="search">Поиск</string>
 </resources>
