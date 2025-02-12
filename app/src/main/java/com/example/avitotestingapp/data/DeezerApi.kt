@@ -18,12 +18,6 @@ interface DeezerApi {
     @GET("/track/{id}")
     fun getTrackById(@Path("id") trackId: Long): Call<Track>
 
-    @GET("album/{albumId}/tracks")
-    fun getTracksByAlbum(
-        @Path("albumId") albumId: Long, // ID альбома
-        @Query("access_token") accessToken: String? = null // Опционально: токен доступа, если требуется авторизация
-    ): Call<Tracks>
-
     companion object {
         private const val BASE_URL = "https://api.deezer.com"
 

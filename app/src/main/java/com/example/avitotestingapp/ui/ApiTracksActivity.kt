@@ -12,10 +12,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.example.avitotestingapp.R
 import com.example.avitotestingapp.data.ChartResponse
-import com.example.avitotestingapp.data.Track
 import com.example.avitotestingapp.data.DeezerApi
 import com.example.avitotestingapp.data.SearchResponse
+import com.example.avitotestingapp.data.Track
 import com.example.avitotestingapp.frameworks.TrackAdapter
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -33,8 +34,22 @@ class ApiTracksActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_api_tracks)
 
+        val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
+        bottomNav.selectedItemId = R.id.audioPlayerActivity // Установите текущий элемент
 
+        bottomNav.setOnItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.downloadedTracksActivity -> {
+                    startActivity(Intent(this, DownloadActivity::class.java))
+                    overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out) // Анимация перехода
+                    true
+                }
+                else -> false
+            }
+
+        }
         val trackRecyclerView = findViewById<RecyclerView>(R.id.trackRecyclerView)
+        if (clickDebounce()) {
         trackAdapter = TrackAdapter { track, position ->
             val trackIds = tracks.map { it.id } // Получаем список ID треков
             val intentAudioPlayerActivity = Intent(this, AudioPlayerActivity::class.java).apply {
@@ -42,7 +57,7 @@ class ApiTracksActivity : AppCompatActivity() {
                 putExtra("TRACK_IDS", trackIds.toLongArray()) // Передаем список ID треков
                 putExtra("CURRENT_TRACK_INDEX", position) // Передаем индекс текущего трека
             }
-            startActivity(intentAudioPlayerActivity)
+            startActivity(intentAudioPlayerActivity)}
         }
 
         trackRecyclerView.adapter = trackAdapter

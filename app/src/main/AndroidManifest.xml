@@ -14,7 +14,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.AvitoTestingApp"
         tools:targetApi="31">
-
+        <activity
+            android:name=".ui.DownloadActivity"
+            android:exported="false" />
         <activity
             android:name=".ui.ApiTracksActivity"
             android:exported="true">
@@ -24,7 +26,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".ui.AudioPlayerActivity"
             android:exported="true">

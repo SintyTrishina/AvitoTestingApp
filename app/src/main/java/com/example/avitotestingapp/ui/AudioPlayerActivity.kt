@@ -35,14 +35,12 @@ class AudioPlayerActivity : AppCompatActivity() {
     private var trackName: String? = null
     private var imageMusic: String? = null
     private val handler = Handler(Looper.getMainLooper())
-    private var trackId: Long = -1
     private var trackIds = longArrayOf()
     private var currentTrackIndex = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_audio_player)
-
         initViews()
         initMediaPlayer()
 

@@ -69,10 +69,7 @@
                 app:itemTextColor="@color/black"
                 app:menu="@menu/nav_menu"
                 />
-
         </LinearLayout>
-
-
 
     </FrameLayout>
 

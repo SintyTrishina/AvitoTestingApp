@@ -98,13 +98,13 @@
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:layout_marginTop="54dp"
-            android:background="@drawable/round_button"
+            android:background="@color/white"
             android:src="@android:drawable/ic_media_rew"
             app:layout_constraintEnd_toStartOf="@id/buttonPlay"
             app:layout_constraintHorizontal_chainStyle="spread_inside"
             app:layout_constraintStart_toEndOf="@id/bigGuideLeft"
             app:layout_constraintTop_toBottomOf="@id/artistName"
-            app:tint="@color/white" />
+            app:tint="@color/black" />
 
         <ImageButton
             android:id="@+id/buttonPlay"
@@ -122,12 +122,12 @@
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:layout_marginTop="54dp"
-            android:background="@drawable/round_button"
+            android:background="@color/white"
             android:src="@android:drawable/ic_media_ff"
             app:layout_constraintEnd_toEndOf="@id/bigGuideRight"
             app:layout_constraintStart_toEndOf="@id/buttonPlay"
             app:layout_constraintTop_toBottomOf="@id/artistName"
-            app:tint="@color/white" />
+            app:tint="@color/black" />
 
         <TextView
             android:id="@+id/timePlay"
