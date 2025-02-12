@@ -1,5 +1,6 @@
 package com.example.avitotestingapp.ui
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -21,7 +22,6 @@ import retrofit2.Response
 
 class ApiTracksActivity : AppCompatActivity() {
     private var tracks = ArrayList<Track>()
-    private var results = ArrayList<Track>()
     private lateinit var inputEditText: EditText
     private var userText: String = ""
     private lateinit var trackAdapter: TrackAdapter
@@ -35,7 +35,16 @@ class ApiTracksActivity : AppCompatActivity() {
 
 
         val trackRecyclerView = findViewById<RecyclerView>(R.id.trackRecyclerView)
-        trackAdapter = TrackAdapter()
+        trackAdapter = TrackAdapter { track, position ->
+            val trackIds = tracks.map { it.id } // Получаем список ID треков
+            val intentAudioPlayerActivity = Intent(this, AudioPlayerActivity::class.java).apply {
+                putExtra("TRACK_ID", track.id)
+                putExtra("TRACK_IDS", trackIds.toLongArray()) // Передаем список ID треков
+                putExtra("CURRENT_TRACK_INDEX", position) // Передаем индекс текущего трека
+            }
+            startActivity(intentAudioPlayerActivity)
+        }
+
         trackRecyclerView.adapter = trackAdapter
 
 
@@ -90,10 +99,10 @@ class ApiTracksActivity : AppCompatActivity() {
 
                     if (response.isSuccessful && response.body() != null) {
                         response.body()?.tracks?.data?.let { data ->
-                            results.clear()
-                            results.addAll(data)
-                            Log.d("AddResult", "$results") // Логируем данные
-                            trackAdapter.updateTracks(results)
+                            tracks.clear()
+                            tracks.addAll(data)
+                            Log.d("AddResult", "$tracks") // Логируем данные
+                            trackAdapter.updateTracks(tracks)
                         } ?: Log.e("AddResult", "Data is null") // Логируем, если data == null
                     } else {
                         Log.e("AddResult", "Response is not successful or body is null")
@@ -117,7 +126,6 @@ class ApiTracksActivity : AppCompatActivity() {
                     ) {
                         if (response.code() == 200) {
                             tracks.clear()
-                            results.clear()
                             if (response.body()?.data?.isNotEmpty() == true) {
                                 tracks.addAll(response.body()?.data!!)
                                 showTracks()

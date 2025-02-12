@@ -8,15 +8,11 @@ import com.example.avitotestingapp.R
 import com.example.avitotestingapp.data.Track
 
 class TrackAdapter(
-    private val onItemClickListener: (Track) -> Unit
+    private val onClick: (Track, Int) -> Unit
 ) : RecyclerView.Adapter<TrackViewHolder>() {
 
     private var tracks: ArrayList<Track> = ArrayList()
-//    private lateinit var searchHistory: SearchHistory
-//
-//    fun initSharedPrefs(sharedPrefs: SharedPreferences) {
-//        searchHistory = SearchHistory(sharedPrefs)
-//    }
+
 
     fun updateTracks(newTracks: ArrayList<Track>) {
         tracks.clear()
@@ -38,7 +34,7 @@ class TrackAdapter(
         val track = tracks[position]
         holder.bind(track)
         holder.itemView.setOnClickListener {
-            onItemClickListener(track)
+            onClick(track, position)
         }
     }
 }
