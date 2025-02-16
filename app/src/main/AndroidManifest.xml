@@ -15,7 +15,8 @@
         android:theme="@style/Theme.AvitoTestingApp"
         tools:targetApi="31">
 
-        <service android:name=".frameworks.MusicService" />
+        <service android:name=".frameworks.MusicService"
+            android:exported="true"/>
 
         <activity
             android:name=".ui.DownloadActivity"
