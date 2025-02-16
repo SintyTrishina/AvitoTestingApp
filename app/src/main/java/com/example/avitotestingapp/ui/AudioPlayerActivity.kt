@@ -1,7 +1,10 @@
 package com.example.avitotestingapp.ui
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.content.SharedPreferences
-import android.media.MediaPlayer
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -15,6 +18,7 @@ import com.bumptech.glide.Glide
 import com.example.avitotestingapp.R
 import com.example.avitotestingapp.data.DeezerApi
 import com.example.avitotestingapp.data.Track
+import com.example.avitotestingapp.frameworks.MusicService
 import com.google.gson.Gson
 import retrofit2.Call
 import retrofit2.Callback
@@ -33,7 +37,6 @@ class AudioPlayerActivity : AppCompatActivity() {
     private lateinit var downloadButton: ImageView
     private lateinit var currentTrack: Track
 
-    private var mediaPlayer: MediaPlayer? = null
     private var playerState = STATE_DEFAULT
     private var previewUrl: String? = null
     private var artistName: String? = null
@@ -51,7 +54,6 @@ class AudioPlayerActivity : AppCompatActivity() {
         setContentView(R.layout.activity_audio_player)
         sharedPrefs = getSharedPreferences("Downloaded tracks", MODE_PRIVATE)
         initViews()
-        initMediaPlayer()
 
         trackIds = intent.getLongArrayExtra("TRACK_IDS") ?: longArrayOf()
         trackId = intent.getLongExtra("TRACK_ID", -1)
@@ -69,7 +71,11 @@ class AudioPlayerActivity : AppCompatActivity() {
         seekBar = findViewById(R.id.seekBar)
         downloadButton = findViewById(R.id.download)
 
-        buttonBack.setOnClickListener { finish() }
+        buttonBack.setOnClickListener { val intent = Intent(this@AudioPlayerActivity, MusicService::class.java).apply {
+            action = "STOP"
+        }
+            startService(intent) // Используем startService для отправки команды
+            finish() }
         buttonPlay.setOnClickListener { playbackControl() }
         buttonPrevious.setOnClickListener { playPreviousTrack() }
         buttonNext.setOnClickListener { playNextTrack() }
@@ -84,7 +90,11 @@ class AudioPlayerActivity : AppCompatActivity() {
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) {
-                    mediaPlayer?.seekTo(progress)
+                    val intent = Intent(this@AudioPlayerActivity, MusicService::class.java).apply {
+                        action = "SEEK_TO"
+                        putExtra("SEEK_TO", progress)
+                    }
+                    startService(intent)
                 }
             }
 
@@ -121,23 +131,6 @@ class AudioPlayerActivity : AppCompatActivity() {
         }
     }
 
-    private fun initMediaPlayer() {
-        mediaPlayer = MediaPlayer().apply {
-            setOnPreparedListener {
-                buttonPlay.isEnabled = true
-                playerState = STATE_PREPARED
-                seekBar.max = it.duration
-                startPlayer()
-            }
-            setOnCompletionListener {
-                playerState = STATE_PREPARED
-                buttonPlay.setImageResource(R.drawable.black_button)
-                handler.removeCallbacks(updatingTime)
-                playNextTrack()
-            }
-        }
-    }
-
     private fun loadTrackData() {
         if (trackIds.isNotEmpty() && currentTrackIndex in trackIds.indices) {
             val trackId = trackIds[currentTrackIndex]
@@ -157,7 +150,7 @@ class AudioPlayerActivity : AppCompatActivity() {
 
                         setupTrackInfo(track)
                         currentTrack = track
-                        previewUrl?.let { url -> preparePlayer(url) }
+                        previewUrl?.let { url -> startMusicService(url) }
                     }
                 } else {
                     Log.e("AudioPlayerActivity", "Failed to get track: ${response.message()}")
@@ -170,44 +163,31 @@ class AudioPlayerActivity : AppCompatActivity() {
         })
     }
 
-    private fun preparePlayer(url: String) {
-        mediaPlayer?.reset()
-        mediaPlayer?.setDataSource(url)
-        mediaPlayer?.prepareAsync()
+    private fun startMusicService(url: String) {
+        val intent = Intent(this, MusicService::class.java).apply {
+            putExtra("PREVIEW_URL", url)
+            putExtra("TRACK_IDS", trackIds)
+            putExtra("CURRENT_TRACK_INDEX", currentTrackIndex)
+        }
+        startService(intent)
     }
 
     private val updatingTime = object : Runnable {
         override fun run() {
             if (playerState == STATE_PLAYING) {
-                mediaPlayer?.currentPosition?.let {
-                    timePlay.text = SimpleDateFormat("mm:ss", Locale.getDefault()).format(it)
-                    seekBar.progress = it
-                }
+                // Здесь нужно обновлять SeekBar и время воспроизведения
                 handler.postDelayed(this, UPDATE_TIME)
             }
         }
     }
 
-    private fun startPlayer() {
-        mediaPlayer?.start()
-        buttonPlay.setImageResource(R.drawable.pause_button)
-        playerState = STATE_PLAYING
-        handler.post(updatingTime)
-    }
-
-    private fun pausePlayer() {
-        mediaPlayer?.pause()
-        buttonPlay.setImageResource(R.drawable.black_button)
-        playerState = STATE_PAUSED
-        handler.removeCallbacks(updatingTime)
-    }
-
     private fun playbackControl() {
-        when (playerState) {
-            STATE_PLAYING -> pausePlayer()
-            STATE_PREPARED, STATE_PAUSED -> startPlayer()
+        val intent = Intent(this, MusicService::class.java).apply {
+            action = if (playerState == STATE_PLAYING) "PAUSE" else "RESUME"
         }
+        startService(intent)
     }
+
 
     private fun playPreviousTrack() {
         if (trackIds.isNotEmpty()) {
@@ -231,27 +211,69 @@ class AudioPlayerActivity : AppCompatActivity() {
             // Проверяем, есть ли URL изображения
             val imageUrl = track.album.cover_big
 
-                // Если URL есть, загружаем изображение
-                Glide.with(this)
-                    .load(imageUrl)
-                    .placeholder(R.drawable.placeholder) // Устанавливаем placeholder
-                    .error(R.drawable.placeholder) // Устанавливаем placeholder в случае ошибки
-                    .into(findViewById(R.id.imageMusic))
+            // Если URL есть, загружаем изображение
+            Glide.with(this)
+                .load(imageUrl)
+                .placeholder(R.drawable.placeholder) // Устанавливаем placeholder
+                .error(R.drawable.placeholder) // Устанавливаем placeholder в случае ошибки
+                .into(findViewById(R.id.imageMusic))
 
         }
-    }
-
-    override fun onPause() {
-        super.onPause()
-        handler.removeCallbacks(updatingTime)
-        pausePlayer()
     }
 
     override fun onDestroy() {
         super.onDestroy()
         handler.removeCallbacks(updatingTime)
-        mediaPlayer?.release()
-        mediaPlayer = null
+        val intent = Intent(this@AudioPlayerActivity, MusicService::class.java).apply {
+            action = "STOP"
+        }
+        startService(intent)
+    }
+
+    private val updateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            when (intent?.action) {
+                "UPDATE_PROGRESS" -> {
+                    val currentPosition = intent.getIntExtra("CURRENT_POSITION", 0)
+                    val duration = intent.getIntExtra("DURATION", 0)
+                    updateSeekBar(currentPosition, duration)
+                }
+                "PLAYBACK_STATE" -> {
+                    val isPlaying = intent.getBooleanExtra("IS_PLAYING", false)
+                    updatePlayButton(isPlaying)
+                }
+            }
+        }
+    }
+
+    private fun updateSeekBar(currentPosition: Int, duration: Int) {
+        seekBar.max = duration
+        seekBar.progress = currentPosition
+        timePlay.text = SimpleDateFormat("mm:ss", Locale.getDefault()).format(currentPosition)
+    }
+
+    private fun updatePlayButton(isPlaying: Boolean) {
+        if (isPlaying) {
+            buttonPlay.setImageResource(R.drawable.pause_button)
+            playerState = STATE_PLAYING
+        } else {
+            buttonPlay.setImageResource(R.drawable.black_button)
+            playerState = STATE_PAUSED
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val filter = IntentFilter().apply {
+            addAction("UPDATE_PROGRESS")
+            addAction("PLAYBACK_STATE")
+        }
+        registerReceiver(updateReceiver, filter, RECEIVER_EXPORTED)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        unregisterReceiver(updateReceiver)
     }
 
     companion object {

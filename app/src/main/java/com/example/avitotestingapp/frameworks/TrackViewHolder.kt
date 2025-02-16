@@ -11,14 +11,17 @@ import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.example.avitotestingapp.R
 import com.example.avitotestingapp.data.Track
 
-class TrackViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
+class TrackViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
     private val artworkImageView: ImageView = itemView.findViewById(R.id.artworkImage)
     private val trackNameView: TextView = itemView.findViewById(R.id.trackName)
     private val artistNameView: TextView = itemView.findViewById(R.id.artistName)
 
 
-    private fun dpToPx(dp: Float, context: Context): Int {
+    private fun dpToPx(
+        dp: Float,
+        context: Context
+    ): Int {
         return TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_DIP,
             dp,
@@ -38,6 +41,5 @@ class TrackViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
             .centerCrop()
             .transform(RoundedCorners(cornerRadius))
             .into(artworkImageView)
-
     }
 }

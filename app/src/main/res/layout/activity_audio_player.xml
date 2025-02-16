@@ -43,36 +43,39 @@
             android:id="@+id/back"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="16dp"
             android:background="@null"
             android:src="@drawable/arrowback"
-            app:layout_constraintStart_toEndOf="@id/smallGuideLeft"
+            app:layout_constraintStart_toEndOf="@id/bigGuideLeft"
             app:layout_constraintTop_toTopOf="parent"
-            app:tint="@color/black" />
+            app:tint="@color/black"
+            tools:ignore="ContentDescription" />
 
         <ImageView
             android:id="@+id/download"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="16dp"
             android:background="@null"
             android:src="@android:drawable/stat_sys_download"
-            app:layout_constraintEnd_toStartOf="@id/smallGuideRight"
+            app:layout_constraintEnd_toStartOf="@id/bigGuideRight"
             app:layout_constraintTop_toTopOf="parent"
-            app:tint="@color/black" />
+            app:tint="@color/black"
+            tools:ignore="ContentDescription" />
 
 
         <ImageView
             android:id="@+id/imageMusic"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:layout_marginTop="42dp"
+            android:layout_marginTop="16dp"
             android:scaleType="centerCrop"
             app:cornerRadius="8dp"
             app:layout_constraintDimensionRatio="1:1"
             app:layout_constraintEnd_toStartOf="@id/bigGuideRight"
             app:layout_constraintStart_toEndOf="@id/bigGuideLeft"
             app:layout_constraintTop_toBottomOf="@id/back"
+            tools:ignore="ContentDescription"
             tools:src="@drawable/placeholder" />
 
         <TextView
@@ -113,10 +116,11 @@
             android:background="@color/white"
             android:src="@android:drawable/ic_media_rew"
             app:layout_constraintEnd_toStartOf="@id/buttonPlay"
-            app:layout_constraintHorizontal_chainStyle="spread_inside"
+            app:layout_constraintHorizontal_chainStyle="spread"
             app:layout_constraintStart_toEndOf="@id/bigGuideLeft"
             app:layout_constraintTop_toBottomOf="@id/artistName"
-            app:tint="@color/black" />
+            app:tint="@color/black"
+            tools:ignore="ContentDescription" />
 
         <ImageButton
             android:id="@+id/buttonPlay"
@@ -127,7 +131,8 @@
             android:src="@drawable/black_button"
             app:layout_constraintEnd_toStartOf="@id/buttonNext"
             app:layout_constraintStart_toEndOf="@id/buttonPrevious"
-            app:layout_constraintTop_toBottomOf="@id/artistName" />
+            app:layout_constraintTop_toBottomOf="@id/artistName"
+            tools:ignore="ContentDescription" />
 
         <ImageButton
             android:id="@+id/buttonNext"
@@ -139,7 +144,8 @@
             app:layout_constraintEnd_toEndOf="@id/bigGuideRight"
             app:layout_constraintStart_toEndOf="@id/buttonPlay"
             app:layout_constraintTop_toBottomOf="@id/artistName"
-            app:tint="@color/black" />
+            app:tint="@color/black"
+            tools:ignore="ContentDescription" />
 
         <TextView
             android:id="@+id/timePlay"
@@ -148,7 +154,7 @@
             android:layout_marginTop="4dp"
             android:gravity="center"
             android:letterSpacing="0"
-            android:text="00:00"
+            android:text="@string/time"
             android:textColor="@color/black"
             android:textFontWeight="500"
             android:textSize="14sp"
@@ -163,7 +169,6 @@
             android:layout_height="match_parent"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toBottomOf="@id/timePlay" />
-
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>

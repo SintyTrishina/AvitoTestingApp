@@ -8,8 +8,12 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
 import android.view.View
+import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.ProgressBar
+import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.example.avitotestingapp.R
@@ -25,18 +29,24 @@ import retrofit2.Response
 
 class ApiTracksActivity : AppCompatActivity() {
     private var tracks = ArrayList<Track>()
+
     private lateinit var inputEditText: EditText
     private var userText: String = ""
     private lateinit var trackAdapter: TrackAdapter
     private val handler = Handler(Looper.getMainLooper())
     private var isClickAllowed = true
     private lateinit var progressBar: ProgressBar
-
+    private lateinit var placeholderMessage: TextView
+    private lateinit var placeholderImage: ImageView
+    private lateinit var updateButton: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_api_tracks)
         progressBar = findViewById(R.id.progressBar)
+        placeholderMessage = findViewById(R.id.placeholderMessage)
+        placeholderImage = findViewById(R.id.placeholderImage)
+        updateButton = findViewById(R.id.updateButton)
 
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
         bottomNav.selectedItemId = R.id.audioPlayerActivity // Установите текущий элемент
@@ -90,6 +100,10 @@ class ApiTracksActivity : AppCompatActivity() {
                     // Если текст не пустой, запускаем поиск с задержкой
                     searchDebounce()
                 }
+                if (s.isNullOrEmpty()) {
+                    placeholderImage.visibility = View.GONE
+                    placeholderMessage.visibility = View.GONE
+                }
             }
 
             override fun afterTextChanged(s: Editable?) {
@@ -102,11 +116,18 @@ class ApiTracksActivity : AppCompatActivity() {
 
         inputEditText.addTextChangedListener(textWatcher)
 
+        updateButton.setOnClickListener {
+            searchDebounce()
+        }
+
 
         getChartTracks()
     }
 
     private fun hideSearchHistory() {
+        placeholderImage.visibility = View.GONE
+        updateButton.visibility = View.GONE
+        placeholderMessage.visibility = View.GONE
         tracks.clear()
         trackAdapter.updateTracks(tracks)
     }
@@ -143,15 +164,37 @@ class ApiTracksActivity : AppCompatActivity() {
                             tracks.addAll(data)
                             Log.d("AddResult", "$tracks") // Логируем данные
                             trackAdapter.updateTracks(tracks)
-                        } ?: Log.e("AddResult", "Data is null") // Логируем, если data == null
-                    } else {
-                        Log.e("AddResult", "Response is not successful or body is null")
+                        }
+                        if (tracks.isEmpty()) {
+                            placeholderImage.setImageResource(R.drawable.error)
+                            placeholderImage.visibility = View.VISIBLE
+                            updateButton.visibility = View.GONE
+                            showMessage(getString(R.string.nothing_found), "")
+                        } else {
+                            placeholderImage.visibility = View.GONE
+                            updateButton.visibility = View.GONE
+                            showMessage("", "")
+                        }
+                    }
+                    else {
+                        placeholderImage.setImageResource(R.drawable.errorconnection)
+                        placeholderImage.visibility = View.VISIBLE
+                        updateButton.visibility = View.VISIBLE
+                        showMessage(
+                            getString(R.string.something_went_wrong), response.code().toString()
+                        )
                     }
                 }
 
+
                 override fun onFailure(call: Call<ChartResponse>, t: Throwable) {
-                    showMessage("something_went_wrong", t.message.toString())
-                    Log.e("DeezerApi", "Error fetching chart tracks", t)
+                    progressBar.visibility = View.GONE
+                    placeholderImage.setImageResource(R.drawable.errorconnection)
+                    placeholderImage.visibility = View.VISIBLE
+                    updateButton.visibility = View.VISIBLE
+                    showMessage(
+                        getString(R.string.something_went_wrong), t.message.toString()
+                    )
                 }
             })
     }
@@ -175,16 +218,29 @@ class ApiTracksActivity : AppCompatActivity() {
                                 tracks.addAll(response.body()?.data!!)
                                 showTracks()
                             } else {
-                                showMessage("nothing_found", "")
+                                placeholderImage.setImageResource(R.drawable.error)
+                                placeholderImage.visibility = View.VISIBLE
+                                updateButton.visibility = View.GONE
+                                showMessage(getString(R.string.nothing_found), "")
                             }
                         } else {
-                            showMessage("something_went_wrong", response.code().toString())
+                            placeholderImage.setImageResource(R.drawable.errorconnection)
+                            placeholderImage.visibility = View.VISIBLE
+                            updateButton.visibility = View.VISIBLE
+                            showMessage(
+                                getString(R.string.something_went_wrong), response.code().toString()
+                            )
                         }
                     }
 
                     override fun onFailure(call: Call<SearchResponse>, t: Throwable) {
-                        progressBar.visibility = View.GONE // Скрываем ProgressBar в случае ошибки
-                        showMessage("something_went_wrong", t.message.toString())
+                        progressBar.visibility = View.GONE
+                        placeholderImage.setImageResource(R.drawable.errorconnection)
+                        placeholderImage.visibility = View.VISIBLE
+                        updateButton.visibility = View.VISIBLE
+                        showMessage(
+                            getString(R.string.something_went_wrong), t.message.toString()
+                        )
                     }
                 })
         } else {
@@ -196,15 +252,26 @@ class ApiTracksActivity : AppCompatActivity() {
 
     private fun showMessage(text: String, additionalMessage: String) {
         if (text.isNotEmpty()) {
+            placeholderMessage.visibility = View.VISIBLE
             tracks.clear()
             trackAdapter.updateTracks(tracks)
+            placeholderMessage.text = text
+            if (additionalMessage.isNotEmpty()) {
+                Toast.makeText(applicationContext, additionalMessage, Toast.LENGTH_LONG).show()
+            }
+        } else {
+            placeholderMessage.visibility = View.GONE
         }
-    }
+        }
+
+
 
     private fun showTracks() {
         if (tracks.isNotEmpty()) {
             trackAdapter.updateTracks(tracks)
-
+            placeholderImage.visibility = View.GONE
+            placeholderMessage.visibility = View.GONE
+            updateButton.visibility = View.GONE
         }
     }
 }
