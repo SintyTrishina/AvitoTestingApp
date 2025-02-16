@@ -83,7 +83,9 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="24dp"
+            android:ellipsize="end"
             android:letterSpacing="0"
+            android:maxLines="1"
             android:textColor="@color/black"
             android:textFontWeight="400"
             android:textSize="22sp"
@@ -98,7 +100,9 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
+            android:ellipsize="end"
             android:letterSpacing="0"
+            android:maxLines="1"
             android:textColor="@color/black"
             android:textFontWeight="400"
             android:textSize="14sp"
@@ -108,17 +112,35 @@
             app:layout_constraintTop_toBottomOf="@id/trackName"
             tools:text="The Beatles" />
 
+        <TextView
+            android:id="@+id/collectionName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:letterSpacing="0"
+            android:maxLines="1"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:textColor="#A6000000"
+            android:textFontWeight="400"
+            android:textSize="11sp"
+            app:layout_constrainedWidth="true"
+            app:layout_constraintEnd_toStartOf="@id/bigGuideRight"
+            app:layout_constraintStart_toEndOf="@id/bigGuideLeft"
+            app:layout_constraintTop_toBottomOf="@id/artistName"
+            tools:text="Album" />
+
         <ImageButton
             android:id="@+id/buttonPrevious"
             android:layout_width="60dp"
             android:layout_height="60dp"
-            android:layout_marginTop="54dp"
+            android:layout_marginTop="28dp"
             android:background="@color/white"
             android:src="@android:drawable/ic_media_rew"
             app:layout_constraintEnd_toStartOf="@id/buttonPlay"
             app:layout_constraintHorizontal_chainStyle="spread"
             app:layout_constraintStart_toEndOf="@id/bigGuideLeft"
-            app:layout_constraintTop_toBottomOf="@id/artistName"
+            app:layout_constraintTop_toBottomOf="@id/collectionName"
             app:tint="@color/black"
             tools:ignore="ContentDescription" />
 
@@ -126,24 +148,24 @@
             android:id="@+id/buttonPlay"
             android:layout_width="100dp"
             android:layout_height="100dp"
-            android:layout_marginTop="30dp"
+            android:layout_marginTop="8dp"
             android:background="@color/white"
             android:src="@drawable/black_button"
             app:layout_constraintEnd_toStartOf="@id/buttonNext"
             app:layout_constraintStart_toEndOf="@id/buttonPrevious"
-            app:layout_constraintTop_toBottomOf="@id/artistName"
+            app:layout_constraintTop_toBottomOf="@id/collectionName"
             tools:ignore="ContentDescription" />
 
         <ImageButton
             android:id="@+id/buttonNext"
             android:layout_width="60dp"
             android:layout_height="60dp"
-            android:layout_marginTop="54dp"
+            android:layout_marginTop="28dp"
             android:background="@color/white"
             android:src="@android:drawable/ic_media_ff"
             app:layout_constraintEnd_toEndOf="@id/bigGuideRight"
             app:layout_constraintStart_toEndOf="@id/buttonPlay"
-            app:layout_constraintTop_toBottomOf="@id/artistName"
+            app:layout_constraintTop_toBottomOf="@id/collectionName"
             app:tint="@color/black"
             tools:ignore="ContentDescription" />
 

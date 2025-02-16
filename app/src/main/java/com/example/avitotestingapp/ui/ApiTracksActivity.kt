@@ -6,7 +6,6 @@ import android.os.Handler
 import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
@@ -15,41 +14,42 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import com.example.avitotestingapp.R
-import com.example.avitotestingapp.data.ChartResponse
 import com.example.avitotestingapp.data.DeezerApi
-import com.example.avitotestingapp.data.SearchResponse
 import com.example.avitotestingapp.data.Track
 import com.example.avitotestingapp.frameworks.TrackAdapter
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import kotlinx.coroutines.launch
 
 class ApiTracksActivity : AppCompatActivity() {
-    private var tracks = ArrayList<Track>()
 
-    private lateinit var inputEditText: EditText
-    private var userText: String = ""
-    private lateinit var trackAdapter: TrackAdapter
-    private val handler = Handler(Looper.getMainLooper())
-    private var isClickAllowed = true
     private lateinit var progressBar: ProgressBar
     private lateinit var placeholderMessage: TextView
     private lateinit var placeholderImage: ImageView
     private lateinit var updateButton: Button
+    private lateinit var inputEditText: EditText
+
+    private var tracks = ArrayList<Track>()
+    private var userText: String = ""
+
+    private lateinit var trackAdapter: TrackAdapter
+    private val handler = Handler(Looper.getMainLooper())
+    private var isClickAllowed = true
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_api_tracks)
+
         progressBar = findViewById(R.id.progressBar)
         placeholderMessage = findViewById(R.id.placeholderMessage)
         placeholderImage = findViewById(R.id.placeholderImage)
         updateButton = findViewById(R.id.updateButton)
 
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_navigation)
-        bottomNav.selectedItemId = R.id.audioPlayerActivity // Установите текущий элемент
+        bottomNav.selectedItemId = R.id.audioPlayerActivity //устанавливаем текущее состояние
 
         bottomNav.setOnItemSelectedListener { item ->
             when (item.itemId) {
@@ -64,9 +64,10 @@ class ApiTracksActivity : AppCompatActivity() {
 
                 else -> false
             }
-
         }
+
         val trackRecyclerView = findViewById<RecyclerView>(R.id.trackRecyclerView)
+
         if (clickDebounce()) {
             trackAdapter = TrackAdapter { track, position ->
                 val trackIds = tracks.map { it.id } // Получаем список ID треков
@@ -82,7 +83,6 @@ class ApiTracksActivity : AppCompatActivity() {
         }
 
         trackRecyclerView.adapter = trackAdapter
-
 
         inputEditText = findViewById(R.id.inputEditText)
 
@@ -119,8 +119,6 @@ class ApiTracksActivity : AppCompatActivity() {
         updateButton.setOnClickListener {
             searchDebounce()
         }
-
-
         getChartTracks()
     }
 
@@ -150,101 +148,62 @@ class ApiTracksActivity : AppCompatActivity() {
 
     private fun getChartTracks() {
         progressBar.visibility = View.VISIBLE
-        DeezerApi.create().getChart()
-            .enqueue(object : Callback<ChartResponse> {
-                override fun onResponse(
-                    call: Call<ChartResponse>,
-                    response: Response<ChartResponse>
-                ) {
-
-                    if (response.isSuccessful && response.body() != null) {
-                        progressBar.visibility = View.GONE
-                        response.body()?.tracks?.data?.let { data ->
-                            tracks.clear()
-                            tracks.addAll(data)
-                            Log.d("AddResult", "$tracks") // Логируем данные
-                            trackAdapter.updateTracks(tracks)
-                        }
-                        if (tracks.isEmpty()) {
-                            placeholderImage.setImageResource(R.drawable.error)
-                            placeholderImage.visibility = View.VISIBLE
-                            updateButton.visibility = View.GONE
-                            showMessage(getString(R.string.nothing_found), "")
-                        } else {
-                            placeholderImage.visibility = View.GONE
-                            updateButton.visibility = View.GONE
-                            showMessage("", "")
-                        }
-                    }
-                    else {
-                        placeholderImage.setImageResource(R.drawable.errorconnection)
-                        placeholderImage.visibility = View.VISIBLE
-                        updateButton.visibility = View.VISIBLE
-                        showMessage(
-                            getString(R.string.something_went_wrong), response.code().toString()
-                        )
-                    }
-                }
-
-
-                override fun onFailure(call: Call<ChartResponse>, t: Throwable) {
-                    progressBar.visibility = View.GONE
-                    placeholderImage.setImageResource(R.drawable.errorconnection)
+        lifecycleScope.launch {
+            try {
+                val response = DeezerApi.create().getChart() // Вызов suspend-функции
+                if (response.tracks.data.isNotEmpty()) {
+                    tracks.clear()
+                    tracks.addAll(response.tracks.data)
+                    trackAdapter.updateTracks(tracks)
+                    placeholderImage.visibility = View.GONE
+                    updateButton.visibility = View.GONE
+                    showMessage("", "")
+                } else {
+                    placeholderImage.setImageResource(R.drawable.error)
                     placeholderImage.visibility = View.VISIBLE
-                    updateButton.visibility = View.VISIBLE
-                    showMessage(
-                        getString(R.string.something_went_wrong), t.message.toString()
-                    )
+                    updateButton.visibility = View.GONE
+                    showMessage(getString(R.string.nothing_found), "")
                 }
-            })
+            } catch (e: Exception) {
+                placeholderImage.setImageResource(R.drawable.errorconnection)
+                placeholderImage.visibility = View.VISIBLE
+                updateButton.visibility = View.VISIBLE
+                showMessage(getString(R.string.something_went_wrong), e.message.toString())
+            } finally {
+                progressBar.visibility = View.GONE
+            }
+        }
     }
 
     private fun search() {
-        // Скрываем историю и показываем ProgressBar
         progressBar.visibility = View.VISIBLE
         hideSearchHistory()
 
-        // Проверяем, есть ли текст для поиска
-        if (inputEditText.text.isNotEmpty()) {
-            DeezerApi.create().searchTracks(query = inputEditText.text.toString())
-                .enqueue(object : Callback<SearchResponse> {
-                    override fun onResponse(
-                        call: Call<SearchResponse>, response: Response<SearchResponse>
-                    ) {
-                        progressBar.visibility = View.GONE // Скрываем ProgressBar после завершения
-                        if (response.code() == 200) {
-                            tracks.clear()
-                            if (response.body()?.data?.isNotEmpty() == true) {
-                                tracks.addAll(response.body()?.data!!)
-                                showTracks()
-                            } else {
-                                placeholderImage.setImageResource(R.drawable.error)
-                                placeholderImage.visibility = View.VISIBLE
-                                updateButton.visibility = View.GONE
-                                showMessage(getString(R.string.nothing_found), "")
-                            }
-                        } else {
-                            placeholderImage.setImageResource(R.drawable.errorconnection)
-                            placeholderImage.visibility = View.VISIBLE
-                            updateButton.visibility = View.VISIBLE
-                            showMessage(
-                                getString(R.string.something_went_wrong), response.code().toString()
-                            )
-                        }
-                    }
-
-                    override fun onFailure(call: Call<SearchResponse>, t: Throwable) {
-                        progressBar.visibility = View.GONE
-                        placeholderImage.setImageResource(R.drawable.errorconnection)
+        val query = inputEditText.text.toString()
+        if (query.isNotEmpty()) {
+            lifecycleScope.launch {
+                try {
+                    val response = DeezerApi.create().searchTracks(query) // Вызов suspend-функции
+                    if (response.data.isNotEmpty()) {
+                        tracks.clear()
+                        tracks.addAll(response.data)
+                        showTracks()
+                    } else {
+                        placeholderImage.setImageResource(R.drawable.error)
                         placeholderImage.visibility = View.VISIBLE
-                        updateButton.visibility = View.VISIBLE
-                        showMessage(
-                            getString(R.string.something_went_wrong), t.message.toString()
-                        )
+                        updateButton.visibility = View.GONE
+                        showMessage(getString(R.string.nothing_found), "")
                     }
-                })
+                } catch (e: Exception) {
+                    placeholderImage.setImageResource(R.drawable.errorconnection)
+                    placeholderImage.visibility = View.VISIBLE
+                    updateButton.visibility = View.VISIBLE
+                    showMessage(getString(R.string.something_went_wrong), e.message.toString())
+                } finally {
+                    progressBar.visibility = View.GONE
+                }
+            }
         } else {
-            // Если текст пустой, скрываем ProgressBar и очищаем историю
             progressBar.visibility = View.GONE
             hideSearchHistory()
         }
@@ -262,8 +221,7 @@ class ApiTracksActivity : AppCompatActivity() {
         } else {
             placeholderMessage.visibility = View.GONE
         }
-        }
-
+    }
 
 
     private fun showTracks() {

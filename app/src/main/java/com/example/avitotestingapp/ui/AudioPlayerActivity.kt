@@ -9,20 +9,20 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.view.View
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.SeekBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
 import com.example.avitotestingapp.R
 import com.example.avitotestingapp.data.DeezerApi
 import com.example.avitotestingapp.data.Track
 import com.example.avitotestingapp.frameworks.MusicService
 import com.google.gson.Gson
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -42,24 +42,30 @@ class AudioPlayerActivity : AppCompatActivity() {
     private var artistName: String? = null
     private var trackName: String? = null
     private var imageMusic: String? = null
+    private var collectionName: String? = null
     private var trackId: Long? = null
+
     private val handler = Handler(Looper.getMainLooper())
+
     private var trackIds = longArrayOf()
     private var currentTrackIndex = 0
+    private val searchList = ArrayList<Track>()
 
-    lateinit var sharedPrefs: SharedPreferences
+    private lateinit var sharedPrefs: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_audio_player)
+
         sharedPrefs = getSharedPreferences("Downloaded tracks", MODE_PRIVATE)
-        initViews()
 
-        trackIds = intent.getLongArrayExtra("TRACK_IDS") ?: longArrayOf()
-        trackId = intent.getLongExtra("TRACK_ID", -1)
-        currentTrackIndex = trackIds.indexOf(trackId!!)
+        initViews() //инициализируем вьюшки
 
-        loadTrackData()
+        trackIds = intent.getLongArrayExtra("TRACK_IDS") ?: longArrayOf() //получаем id треков
+        trackId = intent.getLongExtra("TRACK_ID", -1) //получаем id трека
+        currentTrackIndex = trackIds.indexOf(trackId!!) //получаем индекс трека
+
+        getTrack() //загружаем данные трека
     }
 
     private fun initViews() {
@@ -71,14 +77,17 @@ class AudioPlayerActivity : AppCompatActivity() {
         seekBar = findViewById(R.id.seekBar)
         downloadButton = findViewById(R.id.download)
 
-        buttonBack.setOnClickListener { val intent = Intent(this@AudioPlayerActivity, MusicService::class.java).apply {
-            action = "STOP"
+        buttonBack.setOnClickListener {
+            val intent = Intent(this@AudioPlayerActivity, MusicService::class.java).apply {
+                action = "STOP"
+            }
+            startService(intent) // используем startService для отправки команды
+            finish()
         }
-            startService(intent) // Используем startService для отправки команды
-            finish() }
         buttonPlay.setOnClickListener { playbackControl() }
         buttonPrevious.setOnClickListener { playPreviousTrack() }
         buttonNext.setOnClickListener { playNextTrack() }
+
         downloadButton.setOnClickListener {
             if (::currentTrack.isInitialized) {
                 addTrack(currentTrack)
@@ -103,7 +112,6 @@ class AudioPlayerActivity : AppCompatActivity() {
         })
     }
 
-    private val searchList = ArrayList<Track>()
 
     private fun addTrack(track: Track) {
         Log.d("AudioPlayerActivity", "Adding track: ${track.title}")
@@ -131,36 +139,29 @@ class AudioPlayerActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadTrackData() {
+    private fun getTrack() {
         if (trackIds.isNotEmpty() && currentTrackIndex in trackIds.indices) {
             val trackId = trackIds[currentTrackIndex]
-            getTrack(trackId)
-        }
-    }
+            lifecycleScope.launch {
+                try {
+                    val track = DeezerApi.create().getTrackById(trackId) // Вызов suspend-функции
+                    previewUrl = track.preview
+                    artistName = track.artist.name
+                    trackName = track.title
+                    imageMusic = track.album.coverBig
+                    collectionName = track.album.title
 
-    private fun getTrack(trackId: Long) {
-        DeezerApi.create().getTrackById(trackId = trackId).enqueue(object : Callback<Track> {
-            override fun onResponse(call: Call<Track>, response: Response<Track>) {
-                if (response.isSuccessful) {
-                    response.body()?.let { track ->
-                        previewUrl = track.preview
-                        artistName = track.artist.name
-                        trackName = track.title
-                        imageMusic = track.album.cover_big
-
-                        setupTrackInfo(track)
-                        currentTrack = track
-                        previewUrl?.let { url -> startMusicService(url) }
-                    }
-                } else {
-                    Log.e("AudioPlayerActivity", "Failed to get track: ${response.message()}")
+                    setupTrackInfo(track)
+                    currentTrack = track
+                    previewUrl?.let { url -> startMusicService(url) } ?: Log.e(
+                        "AudioPlayerActivity",
+                        "Failed to get track preview URL"
+                    )
+                } catch (e: Exception) {
+                    Log.e("AudioPlayerActivity", "Failed to load track data", e)
                 }
             }
-
-            override fun onFailure(call: Call<Track>, t: Throwable) {
-                Log.e("AudioPlayerActivity", "Failed to get track", t)
-            }
-        })
+        }
     }
 
     private fun startMusicService(url: String) {
@@ -175,31 +176,32 @@ class AudioPlayerActivity : AppCompatActivity() {
     private val updatingTime = object : Runnable {
         override fun run() {
             if (playerState == STATE_PLAYING) {
-                // Здесь нужно обновлять SeekBar и время воспроизведения
                 handler.postDelayed(this, UPDATE_TIME)
             }
         }
     }
 
     private fun playbackControl() {
-        val intent = Intent(this, MusicService::class.java).apply {
-            action = if (playerState == STATE_PLAYING) "PAUSE" else "RESUME"
+        lifecycleScope.launch {
+            val intent = Intent(this@AudioPlayerActivity, MusicService::class.java).apply {
+                action = if (playerState == STATE_PLAYING) "PAUSE" else "RESUME"
+            }
+            startService(intent)
         }
-        startService(intent)
     }
 
 
     private fun playPreviousTrack() {
         if (trackIds.isNotEmpty()) {
             currentTrackIndex = (currentTrackIndex - 1 + trackIds.size) % trackIds.size
-            loadTrackData()
+            getTrack()
         }
     }
 
     private fun playNextTrack() {
         if (trackIds.isNotEmpty()) {
             currentTrackIndex = (currentTrackIndex + 1) % trackIds.size
-            loadTrackData()
+            getTrack()
         }
     }
 
@@ -207,17 +209,21 @@ class AudioPlayerActivity : AppCompatActivity() {
         track?.let {
             findViewById<TextView>(R.id.trackName).text = track.title
             findViewById<TextView>(R.id.artistName).text = track.artist.name
+            val collectionNameView = findViewById<TextView>(R.id.collectionName)
+            // проверяем, есть ли URL изображения
+            val imageUrl = track.album.coverBig
 
-            // Проверяем, есть ли URL изображения
-            val imageUrl = track.album.cover_big
-
-            // Если URL есть, загружаем изображение
+            // если URL есть, загружаем изображение
             Glide.with(this)
                 .load(imageUrl)
-                .placeholder(R.drawable.placeholder) // Устанавливаем placeholder
-                .error(R.drawable.placeholder) // Устанавливаем placeholder в случае ошибки
+                .placeholder(R.drawable.placeholder) // устанавливаем placeholder
+                .error(R.drawable.placeholder) // устанавливаем placeholder в случае ошибки
                 .into(findViewById(R.id.imageMusic))
 
+            if (collectionName == null) {
+                collectionNameView.visibility = View.GONE
+            }
+            collectionNameView.text = track.album.title
         }
     }
 
@@ -238,6 +244,7 @@ class AudioPlayerActivity : AppCompatActivity() {
                     val duration = intent.getIntExtra("DURATION", 0)
                     updateSeekBar(currentPosition, duration)
                 }
+
                 "PLAYBACK_STATE" -> {
                     val isPlaying = intent.getBooleanExtra("IS_PLAYING", false)
                     updatePlayButton(isPlaying)
@@ -278,7 +285,6 @@ class AudioPlayerActivity : AppCompatActivity() {
 
     companion object {
         private const val STATE_DEFAULT = 0
-        private const val STATE_PREPARED = 1
         private const val STATE_PLAYING = 2
         private const val STATE_PAUSED = 3
         private const val UPDATE_TIME = 300L

@@ -10,6 +10,7 @@ import android.os.Looper
 class MusicService : Service() {
 
     private var mediaPlayer: MediaPlayer? = null
+    private val handler = Handler(Looper.getMainLooper())
 
     override fun onBind(intent: Intent?): IBinder? {
         return null
@@ -20,16 +21,37 @@ class MusicService : Service() {
         mediaPlayer = MediaPlayer()
     }
 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        when (intent?.action) {
 
-    private fun stopPlayback() {
-        mediaPlayer?.stop()
-        mediaPlayer?.release()
-        mediaPlayer = null
-        stopSelf() // Останавливаем сервис
+            "PAUSE" -> pausePlayback() //если действие пауза, ставим на паузу
+
+            "RESUME" -> resumePlayback() //возобновление воспроизведения
+
+            "SEEK_TO" -> {
+                val progress = intent.getIntExtra("SEEK_TO", 0)
+                mediaPlayer?.seekTo(progress)
+            } //перемещает позицию воспроизведения на указанное количество миллисекунд
+
+            "STOP" -> stopPlayback() //останавливаем воспроизведение
+            else -> {
+                val url = intent?.getStringExtra("PREVIEW_URL")
+                if (url != null) {
+                    startPlayback(url) //воспроизведение по url
+                }
+            }
+        }
+        return START_NOT_STICKY //автоматически сервис не перезапускается
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        handler.removeCallbacks(updateProgressRunnable) //отменяем выполнение всех заданий
+        mediaPlayer?.release() //освобождаем ресурсы
+        mediaPlayer = null
+    }
 
-    private val handler = Handler(Looper.getMainLooper())
+    //обновляем прогресс воспроизведения
     private val updateProgressRunnable = object : Runnable {
         override fun run() {
             mediaPlayer?.let {
@@ -37,32 +59,21 @@ class MusicService : Service() {
                     putExtra("CURRENT_POSITION", it.currentPosition)
                     putExtra("DURATION", it.duration)
                 }
-                sendBroadcast(intent)
+                sendBroadcast(intent) //отправляем широковещательное сообщение
             }
-            handler.postDelayed(this, 1000) // Обновляем каждую секунду
+            handler.postDelayed(this, 1000) // обновляем каждую секунду
         }
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        when (intent?.action) {
-            "PAUSE" -> pausePlayback()
-            "RESUME" -> resumePlayback()
-            "SEEK_TO" -> {
-                val progress = intent.getIntExtra("SEEK_TO", 0)
-                mediaPlayer?.seekTo(progress)
-            }
-            "STOP" -> stopPlayback() // Обрабатываем команду STOP
-            else -> {
-                val url = intent?.getStringExtra("PREVIEW_URL")
-                if (url != null) {
-                    startPlayback(url)
-                }
-            }
-        }
 
-        return START_NOT_STICKY
+    private fun stopPlayback() {
+        mediaPlayer?.stop()
+        mediaPlayer?.release()
+        mediaPlayer = null
+        stopSelf() // останавливаем сервис
     }
 
+    //подготавливаем и запускаем медиаплеер
     private fun startPlayback(url: String) {
         mediaPlayer?.reset()
         mediaPlayer?.setDataSource(url)
@@ -77,26 +88,19 @@ class MusicService : Service() {
     private fun pausePlayback() {
         mediaPlayer?.pause()
         handler.removeCallbacks(updateProgressRunnable)
-        sendPlaybackState(false)
+        sendPlaybackState(false) // пауза
     }
 
     private fun resumePlayback() {
         mediaPlayer?.start()
         handler.post(updateProgressRunnable)
-        sendPlaybackState(true)
+        sendPlaybackState(true) // возобновление
     }
 
     private fun sendPlaybackState(isPlaying: Boolean) {
         val intent = Intent("PLAYBACK_STATE").apply {
             putExtra("IS_PLAYING", isPlaying)
         }
-        sendBroadcast(intent)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        handler.removeCallbacks(updateProgressRunnable)
-        mediaPlayer?.release()
-        mediaPlayer = null
+        sendBroadcast(intent) //отправляем состояние плеера
     }
 }

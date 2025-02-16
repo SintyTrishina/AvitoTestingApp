@@ -7,5 +7,5 @@ data class Track(
     val id: Long,
     val position: Int,
     val preview: String,
-    val title: String,
+    val title: String? = "",
 )

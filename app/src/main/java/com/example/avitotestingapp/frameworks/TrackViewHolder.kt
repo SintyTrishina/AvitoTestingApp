@@ -35,7 +35,7 @@ class TrackViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         val cornerRadius = dpToPx(2f, itemView.context)
 
         Glide.with(itemView)
-            .load(item.album.cover)
+            .load(item.album.coverBig)
             .placeholder(R.drawable.placeholder)
             .error(R.drawable.placeholder)
             .centerCrop()

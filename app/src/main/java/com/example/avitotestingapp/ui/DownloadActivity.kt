@@ -6,32 +6,21 @@ import android.os.Handler
 import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
-import android.view.View
 import android.widget.EditText
-import android.widget.ProgressBar
-import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.RecyclerView
 import com.example.avitotestingapp.R
-import com.example.avitotestingapp.data.ChartResponse
-import com.example.avitotestingapp.data.DeezerApi
-import com.example.avitotestingapp.data.SearchResponse
 import com.example.avitotestingapp.data.Track
 import com.example.avitotestingapp.frameworks.TrackAdapter
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.gson.Gson
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 
 class DownloadActivity : AppCompatActivity() {
-    private var tracks = ArrayList<Track>()
     private lateinit var inputEditText: EditText
+
+    private var tracks = ArrayList<Track>()
     private var userText: String = ""
+
     private lateinit var trackAdapter: TrackAdapter
     private val handler = Handler(Looper.getMainLooper())
     private var isClickAllowed = true
@@ -57,6 +46,7 @@ class DownloadActivity : AppCompatActivity() {
         }
 
         val trackRecyclerView = findViewById<RecyclerView>(R.id.trackRecyclerView)
+
         trackAdapter = TrackAdapter { track, position ->
             if (clickDebounce()) {
                 val trackIds = tracks.map { it.id }
@@ -69,10 +59,13 @@ class DownloadActivity : AppCompatActivity() {
                 startActivity(intentAudioPlayerActivity)
             }
         }
+
         trackRecyclerView.adapter = trackAdapter
+
         loadTracks()
 
         inputEditText = findViewById(R.id.inputEditText)
+
         inputEditText.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
@@ -83,6 +76,7 @@ class DownloadActivity : AppCompatActivity() {
                     searchDebounce()
                 }
             }
+
             override fun afterTextChanged(s: Editable?) {
                 userText = s.toString()
                 if (!s.isNullOrBlank()) {
@@ -138,8 +132,8 @@ class DownloadActivity : AppCompatActivity() {
         } else {
             // Если текст не пустой, фильтруем треки
             val filteredTracks = tracks.filter { track ->
-                track.title.contains(userText, ignoreCase = true) ||
-                        track.artist.name.contains(userText, ignoreCase = true)
+                track.title!!.contains(userText, ignoreCase = true) ||
+                        track.artist.name!!.contains(userText, ignoreCase = true)
             }
             trackAdapter.updateTracks(filteredTracks)
         }

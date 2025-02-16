@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName
 data class Artist(
     val id: Int,
     val link: String,
-    val name: String,
+    val name: String? = "",
     val picture: String,
     @SerializedName("picture_big") val pictureBig: String,
     @SerializedName("picture_medium") val pictureMedium: String,
