@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.AudioPlayerActivity">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/bigGuideLeft"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_begin="16dp" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/bigGuideRight"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_end="16dp" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/smallGuideLeft"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_begin="8dp" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/smallGuideRight"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_end="8dp" />
+
+        <ImageView
+            android:id="@+id/back"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@null"
+            android:src="@drawable/arrowback"
+            app:layout_constraintStart_toEndOf="@id/bigGuideLeft"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/black"
+            tools:ignore="ContentDescription" />
+
+        <ImageView
+            android:id="@+id/download"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:background="@null"
+            android:src="@android:drawable/stat_sys_download"
+            app:layout_constraintEnd_toStartOf="@id/bigGuideRight"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/black"
+            tools:ignore="ContentDescription" />
+
+
+        <ImageView
+            android:id="@+id/imageMusic"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_marginTop="16dp"
+            android:scaleType="centerCrop"
+            app:cornerRadius="8dp"
+            app:layout_constraintDimensionRatio="1:1"
+            app:layout_constraintEnd_toStartOf="@id/bigGuideRight"
+            app:layout_constraintStart_toEndOf="@id/bigGuideLeft"
+            app:layout_constraintTop_toBottomOf="@id/back"
+            tools:ignore="ContentDescription"
+            tools:src="@drawable/placeholder" />
+
+        <TextView
+            android:id="@+id/trackName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:ellipsize="end"
+            android:letterSpacing="0"
+            android:maxLines="1"
+            android:textColor="@color/black"
+            android:textFontWeight="400"
+            android:textSize="22sp"
+            app:layout_constrainedWidth="true"
+            app:layout_constraintEnd_toEndOf="@id/bigGuideRight"
+            app:layout_constraintStart_toEndOf="@id/bigGuideLeft"
+            app:layout_constraintTop_toBottomOf="@id/imageMusic"
+            tools:text="Yesterday (Remastered 2009)" />
+
+        <TextView
+            android:id="@+id/artistName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:ellipsize="end"
+            android:letterSpacing="0"
+            android:maxLines="1"
+            android:textColor="@color/black"
+            android:textFontWeight="400"
+            android:textSize="14sp"
+            app:layout_constrainedWidth="true"
+            app:layout_constraintEnd_toEndOf="@id/bigGuideRight"
+            app:layout_constraintStart_toEndOf="@id/bigGuideLeft"
+            app:layout_constraintTop_toBottomOf="@id/trackName"
+            tools:text="The Beatles" />
+
+        <TextView
+            android:id="@+id/collectionName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:letterSpacing="0"
+            android:maxLines="1"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:textColor="#A6000000"
+            android:textFontWeight="400"
+            android:textSize="11sp"
+            app:layout_constrainedWidth="true"
+            app:layout_constraintEnd_toStartOf="@id/bigGuideRight"
+            app:layout_constraintStart_toEndOf="@id/bigGuideLeft"
+            app:layout_constraintTop_toBottomOf="@id/artistName"
+            tools:text="Album" />
+
+        <ImageButton
+            android:id="@+id/buttonPrevious"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginTop="28dp"
+            android:background="@color/white"
+            android:src="@android:drawable/ic_media_rew"
+            app:layout_constraintEnd_toStartOf="@id/buttonPlay"
+            app:layout_constraintHorizontal_chainStyle="spread"
+            app:layout_constraintStart_toEndOf="@id/bigGuideLeft"
+            app:layout_constraintTop_toBottomOf="@id/collectionName"
+            app:tint="@color/black"
+            tools:ignore="ContentDescription" />
+
+        <ImageButton
+            android:id="@+id/buttonPlay"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:layout_marginTop="8dp"
+            android:background="@color/white"
+            android:src="@drawable/black_button"
+            app:layout_constraintEnd_toStartOf="@id/buttonNext"
+            app:layout_constraintStart_toEndOf="@id/buttonPrevious"
+            app:layout_constraintTop_toBottomOf="@id/collectionName"
+            tools:ignore="ContentDescription" />
+
+        <ImageButton
+            android:id="@+id/buttonNext"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginTop="28dp"
+            android:background="@color/white"
+            android:src="@android:drawable/ic_media_ff"
+            app:layout_constraintEnd_toEndOf="@id/bigGuideRight"
+            app:layout_constraintStart_toEndOf="@id/buttonPlay"
+            app:layout_constraintTop_toBottomOf="@id/collectionName"
+            app:tint="@color/black"
+            tools:ignore="ContentDescription" />
+
+        <TextView
+            android:id="@+id/timePlay"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:gravity="center"
+            android:letterSpacing="0"
+            android:text="@string/time"
+            android:textColor="@color/black"
+            android:textFontWeight="500"
+            android:textSize="14sp"
+            app:layout_constrainedWidth="true"
+            app:layout_constraintEnd_toEndOf="@id/buttonPlay"
+            app:layout_constraintStart_toStartOf="@id/buttonPlay"
+            app:layout_constraintTop_toBottomOf="@id/buttonPlay" />
+
+        <SeekBar
+            android:id="@+id/seekBar"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@id/timePlay" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>

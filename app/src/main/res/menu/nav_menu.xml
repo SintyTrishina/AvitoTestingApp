@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/audioPlayerActivity"
+        android:icon="@drawable/search"
+        android:iconTint="@color/black"
+        android:title="" />
+    <item
+        android:id="@+id/downloadedTracksActivity"
+        android:icon="@android:drawable/stat_sys_download"
+        android:iconTint="@color/black"
+        android:title="" />
+
+</menu>
